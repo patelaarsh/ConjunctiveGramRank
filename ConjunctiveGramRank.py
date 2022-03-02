@@ -9,6 +9,9 @@ inv_index = {}
 # M-Gram value
 m_gram = 3
 
+# Document count
+doc_count = 0
+
 # Infinity
 infinity_p = (math.inf, math.inf)
 infinity_n = (-math.inf, -math.inf)
@@ -91,7 +94,7 @@ def next(t, c):
     if t not in inv_index.keys() or c == infinity_p:
         return infinity_p
 
-    if c == infinity_n:
+    if c == infinity_n or c[1] == infinity_n:
         return first(t)
 
     d = inv_index[t]
@@ -108,7 +111,7 @@ def prev(t, c):
     if t not in inv_index.keys() or c == infinity_n:
         return infinity_n
 
-    if c == infinity_p:
+    if c == infinity_p or c[1] == infinity_p:
         return last(t)
 
     d = inv_index[t]
@@ -135,6 +138,9 @@ def next_phrase(t, c):
         print(f"next({t[e]},{temp}) = {v}")
         # print(f"N1[{t[e]}] = {v}")
         e += 1
+
+    if v == infinity_p and c[0] < doc_count - 1:
+        return next_phrase(t, (c[0] + 1, 0))
 
     if v == infinity_p:
         return [infinity_p, infinity_p]
@@ -171,6 +177,9 @@ def prev_phrase(t, c):
         # print(f"N1[{t[e]}] = {v}")
         e += -1
 
+    if v == infinity_n and c[0] >= 1:
+        return prev_phrase(t, (c[0] - 1, infinity_p))
+
     if v == infinity_n:
         return [infinity_n, infinity_n]
 
@@ -185,41 +194,63 @@ def prev_phrase(t, c):
         e += 1
 
     if v[0] == u[0] and u[1] - v[1] == n:
-        return [u, v]
+        return [v, u]
     else:
         return prev_phrase(t, u)
 
 
 # Return first entry after current
 def next_doc(t, c):
-    s = set()
-    for e in t:
-        v = next(e, c)
-        s.add(v)
-    s = sorted(list(s))
+    s = next_phrase(t, c)
     print(f"next_phrase({t},{c}) = {s}")
     return s[-1]
 
 
 # Return last entry before current
 def prev_doc(t, c):
-    s = set()
-    for e in t:
-        v = prev(e, c)
-        s.add(v)
-    s = sorted(list(s))
+    s = prev_phrase(t, c)
     print(f"prev_phrase({t},{c}) = {s}")
     return s[0]
 
 
+# Doc Right
+def doc_right(q, c):
+    grams = gen_mgram(q)
+    result = next_doc(grams, c)
+    print(f"next_doc({grams},{c}) = {result}")
+    return result
+
+
+# Doc Left
+def doc_left(q, c):
+    grams = gen_mgram(q)
+    result = prev_doc(grams, c)
+    print(f"prev_doc({grams},{c}) = {result}")
+    return result
+
+
+# Compare 2 entries
+def compare(u, v):
+    if u[0] < v[0]:
+        return -1
+    elif u[0] > v[0]:
+        return 1
+    elif u[1] < v[1]:
+        return -1
+    elif u[1] > v[1]:
+        return 1
+    else:
+        return 0
+
+
 # Find next cover
 def next_cover(q, c):
-    v = next_doc(q, c)
-    print(f"next_doc({q},{c}) = {v}")
+    v = doc_right(q, c)
+    print(f"docRight({q},{c}) = {v}")
     if v == infinity_p:
         return [infinity_p, infinity_p]
-    u = prev_doc(q, (v[0], v[1] + 1))
-    print(f"prev_doc({q},{(v[0], v[1] + 1)}) = {u}")
+    u = doc_left(q, (v[0], v[1] + 1))
+    print(f"docLeft({q},{(v[0], v[1] + 1)}) = {u}")
     if u[0] == v[0]:
         return [u, v]
     else:
@@ -306,6 +337,13 @@ def print_rank_proximity(q, k):
     print(f"rank_proximity({q},{k}) = {rank_proximity(q, k)}")
 
 
+# Test Result
+def print_result(res):
+    print(f'DocId Score')
+    for r in res:
+        print(f'{r[0] + 1} {r[1]}')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("folder", help="get documents from folder", type=str)
@@ -331,29 +369,12 @@ if __name__ == '__main__':
 
     # Inverted index m-gram
     m_gram = args.mgram
+    doc_count = len(docs)
     inv_index = gen_database(docs)
 
     print(inv_index)
     print()
 
-    gram = gen_mgram("the_brown")
-    print(gram)
-    print()
-
-    # print_next_phrase(gram, infinity_n)
-    # print()
-    #
-    # print_prev_phrase(gram, infinity_p)
-    # print()
-    #
-    # print_next_doc(gram, infinity_n)
-    # print()
-    #
-    # print_prev_doc(gram, infinity_p)
-    # print()
-    #
-    # print_next_cover(gram, infinity_n)
-    # print()
-
-    print_rank_proximity(gram, 5)
-    print()
+    result = rank_proximity(args.query, args.nresults)
+    print(f"rank_proximity({args.query},{args.nresults}) = {result}")
+    print_result(result)
