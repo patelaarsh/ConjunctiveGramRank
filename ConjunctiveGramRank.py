@@ -128,15 +128,11 @@ def next_phrase(t, c):
     v = c
     n = len(t) - 1
 
-    # print(f"Next Phrase[{c}]")
-
     e = 0
     while e <= n:
-        # print(f"P1[{t[e]}] = {v}")
-        temp = v
+        # temp = v
         v = next(t[e], v)
-        print(f"next({t[e]},{temp}) = {v}")
-        # print(f"N1[{t[e]}] = {v}")
+        # print(f"next({t[e]},{temp}) = {v}")
         e += 1
 
     if v == infinity_p and c[0] < doc_count - 1:
@@ -148,11 +144,9 @@ def next_phrase(t, c):
     u = v
     e = n - 1
     while e >= 0:
-        # print(f"P2[{t[e]}] = {u}")
-        temp = u
+        # temp = u
         u = prev(t[e], u)
-        print(f"prev({t[e]},{temp}) = {u}")
-        # print(f"N2[{t[e]}] = {u}")
+        # print(f"prev({t[e]},{temp}) = {u}")
         e += -1
 
     if v[0] == u[0] and v[1] - u[1] == n:
@@ -166,15 +160,11 @@ def prev_phrase(t, c):
     v = c
     n = len(t) - 1
 
-    # print(f"Prev Phrase[{c}]")
-
     e = n
     while e >= 0:
-        # print(f"P1[{t[e]}] = {v}")
-        temp = v
+        # temp = v
         v = prev(t[e], v)
-        print(f"prev({t[e]},{temp}) = {v}")
-        # print(f"N1[{t[e]}] = {v}")
+        # print(f"prev({t[e]},{temp}) = {v}")
         e += -1
 
     if v == infinity_n and c[0] >= 1:
@@ -186,11 +176,9 @@ def prev_phrase(t, c):
     u = v
     e = 1
     while e <= n:
-        # print(f"P2[{t[e]}] = {u}")
-        temp = u
+        # temp = u
         u = next(t[e], u)
-        print(f"next({t[e]},{temp}) = {u}")
-        # print(f"N2[{t[e]}] = {u}")
+        # print(f"next({t[e]},{temp}) = {u}")
         e += 1
 
     if v[0] == u[0] and u[1] - v[1] == n:
@@ -202,30 +190,38 @@ def prev_phrase(t, c):
 # Return first entry after current
 def next_doc(t, c):
     s = next_phrase(t, c)
-    print(f"next_phrase({t},{c}) = {s}")
+    # print(f"next_phrase({t},{c}) = {s}")
     return s[-1]
 
 
 # Return last entry before current
 def prev_doc(t, c):
     s = prev_phrase(t, c)
-    print(f"prev_phrase({t},{c}) = {s}")
+    # print(f"prev_phrase({t},{c}) = {s}")
     return s[0]
 
 
 # Doc Right
 def doc_right(q, c):
+    # Adjust padding
+    if len(q) < m_gram:
+        padding = ''.join(['_' for _ in range(m_gram - len(q))])
+        q = padding + q
     grams = gen_mgram(q)
     result = next_doc(grams, c)
-    print(f"next_doc({grams},{c}) = {result}")
+    # print(f"next_doc({grams},{c}) = {result}")
     return result
 
 
 # Doc Left
 def doc_left(q, c):
+    # Adjust padding
+    if len(q) < m_gram:
+        padding = ''.join(['_' for _ in range(m_gram - len(q))])
+        q = padding + q
     grams = gen_mgram(q)
     result = prev_doc(grams, c)
-    print(f"prev_doc({grams},{c}) = {result}")
+    # print(f"prev_doc({grams},{c}) = {result}")
     return result
 
 
@@ -246,11 +242,11 @@ def compare(u, v):
 # Find next cover
 def next_cover(q, c):
     v = doc_right(q, c)
-    print(f"docRight({q},{c}) = {v}")
+    # print(f"docRight({q},{c}) = {v}")
     if v == infinity_p:
         return [infinity_p, infinity_p]
     u = doc_left(q, (v[0], v[1] + 1))
-    print(f"docLeft({q},{(v[0], v[1] + 1)}) = {u}")
+    # print(f"docLeft({q},{(v[0], v[1] + 1)}) = {u}")
     if u[0] == v[0]:
         return [u, v]
     else:
@@ -261,7 +257,7 @@ def next_cover(q, c):
 def rank_proximity(q, k):
     # Starts from -infinity
     [u, v] = next_cover(q, infinity_n)
-    print(f"next_cover({q},{infinity_n}) = {[u, v]}")
+    # print(f"next_cover({q},{infinity_n}) = {[u, v]}")
 
     # Data
     result = []
@@ -275,7 +271,7 @@ def rank_proximity(q, k):
             d = u[0]
         score += 1 / (v[1] - u[1] + 1)
         [u, v] = next_cover(q, u)
-        print(f"next_cover({q},{u}) = {[u, v]}")
+        # print(f"next_cover({q},{u}) = {[u, v]}")
 
     if d < infinity_p[0]:
         result.append((d, score))
@@ -285,56 +281,6 @@ def rank_proximity(q, k):
 
     # Return top k results
     return result[0:k]
-
-
-# Test First
-def print_first(t):
-    print(f"first({t}) = {first(t)}")
-
-
-# Test Last
-def print_last(t):
-    print(f"last({t}) = {last(t)}")
-
-
-# Test Next
-def print_next(t, c):
-    print(f"next({t},{c}) = {next(t, c)}")
-
-
-# Test Prev
-def print_prev(t, c):
-    print(f"prev({t},{c}) = {prev(t, c)}")
-
-
-# Test NextPhrase
-def print_next_phrase(t, c):
-    print(f"next_phrase({t},{c}) = {next_phrase(t, c)}")
-
-
-# Test PrevPhrase
-def print_prev_phrase(t, c):
-    print(f"prev_phrase({t},{c}) = {prev_phrase(t, c)}")
-
-
-# Test NextDoc
-def print_next_doc(t, c):
-    print(f"next_doc({t},{c}) = {next_doc(t, c)}")
-
-
-# Test PrevDoc
-def print_prev_doc(t, c):
-    print(f"prev_doc({t},{c}) = {prev_doc(t, c)}")
-
-
-# Test NextCover
-def print_next_cover(q, c):
-    print(f"next_cover({q},{c}) = {next_cover(q, c)}")
-
-
-# Test RankProximity
-def print_rank_proximity(q, k):
-    print(f"rank_proximity({q},{k}) = {rank_proximity(q, k)}")
 
 
 # Test Result
@@ -372,9 +318,9 @@ if __name__ == '__main__':
     doc_count = len(docs)
     inv_index = gen_database(docs)
 
-    print(inv_index)
-    print()
+    # print(inv_index)
+    # print()
 
-    result = rank_proximity(args.query, args.nresults)
-    print(f"rank_proximity({args.query},{args.nresults}) = {result}")
-    print_result(result)
+    ranks = rank_proximity(args.query, args.nresults)
+    # print(f"rank_proximity({args.query},{args.nresults}) = {result}")
+    print_result(ranks)
