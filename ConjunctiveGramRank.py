@@ -46,6 +46,17 @@ def gen_mgram(c):
     return lst
 
 
+# Check M-grams in database
+def check_pass(g):
+    lst = []
+
+    for t in g:
+        if t in inv_index.keys():
+            lst.append(t)
+
+    return lst
+
+
 # Generate inverted index database
 def gen_database(d):
     # Inverted index Database
@@ -255,16 +266,13 @@ def prev_doc(t, c):
 def doc_right(q, c):
     result = []
 
-    q = q.split(' ')
-    q.reverse()
-
     for t in q:
-        t = t.lower()
-        # Adjust padding
-        if len(t) < m_gram:
+        term = t
+        if len(term) < m_gram:
             padding = ''.join(['_' for _ in range(m_gram - len(t))])
-            t = padding + t
-        grams = gen_mgram(t)
+            term = term + padding
+        grams = gen_mgram(term)
+        grams = check_pass(grams)
         result.append(next_doc(grams, c))
         # print(f"next_doc({grams},{c}) = {result}")
 
@@ -275,16 +283,13 @@ def doc_right(q, c):
 def doc_left(q, c):
     result = []
 
-    q = q.split(' ')
-    q.reverse()
-
     for t in q:
-        t = t.lower()
-        # Adjust padding
-        if len(t) < m_gram:
+        term = t
+        if len(term) < m_gram:
             padding = ''.join(['_' for _ in range(m_gram - len(t))])
-            t = padding + t
-        grams = gen_mgram(t)
+            term = term + padding
+        grams = gen_mgram(term)
+        grams = check_pass(grams)
         result.append(prev_doc(grams, c))
         # print(f"prev_doc({grams},{c}) = {result}")
 
@@ -353,7 +358,7 @@ def rank_proximity(q, k):
 def print_result(res):
     print(f'DocId Score')
     for r in res:
-        print(f'{r[0] + 1} {r[1]}')
+        print("%d %.2g" % (r[0]+1, r[1]))
 
 
 if __name__ == '__main__':
@@ -361,7 +366,7 @@ if __name__ == '__main__':
     parser.add_argument("folder", help="get documents from folder", type=str)
     parser.add_argument("mgram", help="get m-gram count", type=int)
     parser.add_argument("nresults", help="get result count", type=int)
-    parser.add_argument("query", help="get query", type=str)
+    parser.add_argument("query", help="get query", type=str, nargs='*')
     args = parser.parse_args()
 
     # Get all files from folder
@@ -387,6 +392,6 @@ if __name__ == '__main__':
     # print(inv_index)
     # print()
 
-    ranks = rank_proximity(args.query, args.nresults)
+    ranks = rank_proximity(list(args.query), args.nresults)
     # print(f"rank_proximity({args.query},{args.nresults}) = {result}")
     print_result(ranks)
