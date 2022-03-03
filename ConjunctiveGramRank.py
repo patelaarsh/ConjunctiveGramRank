@@ -97,13 +97,38 @@ def next(t, c):
     if c == infinity_n or c[1] == infinity_n:
         return first(t)
 
+    low = 0
+    jump = 1
+    high = low + jump
     d = inv_index[t]
 
-    for _, e in enumerate(d):
-        if c[0] == e[0] and e[1] > c[1]:
-            return e
+    # Galloping Search
+    if compare(d[-1], c) == -1 or compare(d[-1], c) == 0:
+        return infinity_p
 
-    return infinity_p
+    if compare(d[0], c) == 1:
+        return d[0]
+
+    while high < len(d) - 1 and (compare(d[high], c) == -1 or compare(d[high], c) == 0):
+        jump *= 2
+        low = high
+        high = low + jump
+
+    if high > len(d):
+        high = len(d) - 1
+
+    pos = binary_search_next(t, c, low, high)
+    return d[pos]
+
+
+def binary_search_next(t, c, low, high):
+    while high - low > 1:
+        mid = (low + high) // 2
+        if compare(inv_index[t][mid], c) == -1 or compare(inv_index[t][mid], c) == 0:
+            low = mid
+        else:
+            high = mid
+    return high
 
 
 # Get prev entry for the term
@@ -114,13 +139,38 @@ def prev(t, c):
     if c == infinity_p or c[1] == infinity_p:
         return last(t)
 
+    low = 0
+    jump = 1
+    high = low + jump
     d = inv_index[t]
 
-    for _, e in enumerate(list(reversed(d))):
-        if c[0] == e[0] and e[1] < c[1]:
-            return e
+    # Galloping Search
+    if compare(d[-1], c) == -1:
+        return d[-1]
 
-    return infinity_n
+    if compare(d[0], c) == 0 or compare(d[0], c) == 1:
+        return infinity_n
+
+    while high < len(d) - 1 and compare(d[high], c) == -1:
+        low = high
+        jump *= 2
+        high = low + jump
+
+    if high > len(d):
+        high = len(d) - 1
+
+    pos = binary_search_prev(t, c, low, high)
+    return d[pos]
+
+
+def binary_search_prev(t, c, low, high):
+    while high-low > 1:
+        mid = (low+high)//2
+        if compare(inv_index[t][mid], c) == -1:
+            low = mid
+        else:
+            high = mid
+    return low
 
 
 # Find Next Phrase
@@ -203,26 +253,42 @@ def prev_doc(t, c):
 
 # Doc Right
 def doc_right(q, c):
-    # Adjust padding
-    if len(q) < m_gram:
-        padding = ''.join(['_' for _ in range(m_gram - len(q))])
-        q = padding + q
-    grams = gen_mgram(q)
-    result = next_doc(grams, c)
-    # print(f"next_doc({grams},{c}) = {result}")
-    return result
+    result = []
+
+    q = q.split(' ')
+    q.reverse()
+
+    for t in q:
+        t = t.lower()
+        # Adjust padding
+        if len(t) < m_gram:
+            padding = ''.join(['_' for _ in range(m_gram - len(t))])
+            t = padding + t
+        grams = gen_mgram(t)
+        result.append(next_doc(grams, c))
+        # print(f"next_doc({grams},{c}) = {result}")
+
+    return result.pop()
 
 
 # Doc Left
 def doc_left(q, c):
-    # Adjust padding
-    if len(q) < m_gram:
-        padding = ''.join(['_' for _ in range(m_gram - len(q))])
-        q = padding + q
-    grams = gen_mgram(q)
-    result = prev_doc(grams, c)
-    # print(f"prev_doc({grams},{c}) = {result}")
-    return result
+    result = []
+
+    q = q.split(' ')
+    q.reverse()
+
+    for t in q:
+        t = t.lower()
+        # Adjust padding
+        if len(t) < m_gram:
+            padding = ''.join(['_' for _ in range(m_gram - len(t))])
+            t = padding + t
+        grams = gen_mgram(t)
+        result.append(prev_doc(grams, c))
+        # print(f"prev_doc({grams},{c}) = {result}")
+
+    return result.pop()
 
 
 # Compare 2 entries
